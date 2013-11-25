@@ -423,13 +423,13 @@ class JsonParser(object):
         """
         读取字典中的数据，存入类中，若遇到不是字符串的key则忽略。
         """
-        if not isinstance(dct, dict):
-            raise TypeError("dct must be dict type")
-        else:
-            return self.load(dct)
+        return self.load(dct)
 
     def dumpDict(self, obj):
         """
         返回一个字典，包含类中数据
         """
-        return self.dump(obj)
+        if not isinstance(obj, dict):
+            raise TypeError("dct must be dict type")
+        else:
+            return self.dump(obj)
