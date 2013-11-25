@@ -42,5 +42,9 @@ class TestDumps(unittest.TestCase):
         print(self.parser.dump([False, [True, 3]]))
         print(self.parser.dump((2, [True, [False, (4, 5)]], 4)))
 
+    def test_dict(self):
+        print(self.parser.dump({}))
+        print(self.parser.dump({"abc": True}))
+
 if __name__ == '__main__':
     unittest.main()

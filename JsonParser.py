@@ -4,9 +4,10 @@ __author__ = 'wufulin'
 __version__ = '1.0.0'
 
 import Tool
+import re
+
 
 class JsonParser(object):
-
     item_separator = ','
     key_separator = ':'
 
@@ -14,7 +15,20 @@ class JsonParser(object):
         """
         返回JSON string,表示Python string
         """
-        pass
+        ESCAPE = re.compile(r'[\x00-\x1f\\"\b\f\n\r\t]')
+        ESCAPE_DCT = {
+            '\\': '\\\\',
+            '"': '\\"',
+            '\b': '\\b',
+            '\f': '\\f',
+            '\n': '\\n',
+            '\r': '\\r',
+            '\t': '\\t',
+        }
+
+        def replace(match):
+            return ESCAPE_DCT[match.group(0)]
+        return '"' + ESCAPE.sub(replace, obj) + '"'
 
     def _encode_array(self, lst, level):
         if not lst:
@@ -30,7 +44,7 @@ class JsonParser(object):
                 buf += self.item_separator
 
             if isinstance(value, basestring):
-                pass
+                buf += self._encode_string(value)
             elif value is None:
                 buf += self._encode_null()
             elif isinstance(value, bool):
@@ -40,13 +54,61 @@ class JsonParser(object):
             elif isinstance(value, (list, tuple)):
                 buf += self._encode_array(value, level)
             elif isinstance(value, dict):
-                pass
+                buf += self._encode_object(value, 0)
         buf += ']'
 
         return buf
 
-    def _encode_object(self, obj):
-        pass
+    def _encode_object(self, dct, level):
+        if not dct:
+            return '{}'
+
+        buf = '{'
+        first = True
+        level += 1
+        items = dct.iteritems()
+
+        for key, value in items:
+            if isinstance(key, basestring):
+                pass
+            elif isinstance(key, float):
+                key = self._encode_number(key)
+            elif key is True:
+                key = 'true'
+            elif key is False:
+                key = 'false'
+            elif key is None:
+                key = 'null'
+            elif isinstance(key, (int, long)):
+                key = str(key)
+            else:
+                raise TypeError("key " + repr(key) + " is not a string")
+            if first:
+                first = False
+            else:
+                buf += self.item_separator
+            buf += self._encode_string(key)
+            buf += self.key_separator
+
+            if isinstance(value, basestring):
+                buf += self._encode_string(value)
+            elif value is None:
+                buf += 'null'
+            elif value is True:
+                buf += 'true'
+            elif value is False:
+                buf += 'false'
+            elif isinstance(value, (int, long)):
+                buf += str(value)
+            elif isinstance(value, float):
+                buf += self._encode_number(value)
+            else:
+                if isinstance(value, (list, tuple)):
+                    buf += self._encode_array(value, 0)
+                elif isinstance(value, dict):
+                    buf += self._encode_object(value, level)
+        buf += '}'
+        return buf
 
     def _encode_number(self, obj):
         if isinstance(obj, float):
@@ -86,6 +148,8 @@ class JsonParser(object):
             return self._encode_number(obj)
         elif isinstance(obj, (list, tuple)):
             return self._encode_array(obj, 0)
+        elif isinstance(obj, dict):
+            return self._encode_object(obj, 0)
 
     def loadJson(self, filePath):
         """
@@ -113,6 +177,7 @@ class JsonParser(object):
 
     def update(self, dict):
         pass
+
 
 if __name__ == '__main__':
     parser = JsonParser()
